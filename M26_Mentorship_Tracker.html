@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M26 Peer Mentorship Tracker &mdash; ALU Rwanda</title>
+<style>
+:root {
+  --primary: #2E4057;
+  --primary-light: #3d5272;
+  --accent: #048A81;
+  --warn: #E76F51;
+  --success: #2D9E6B;
+  --light: #f4f6fb;
+  --border: #dde3ec;
+  --text: #1a1a2e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+  background: var(--light);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+}
+
+/* -- Header ------------------------------------------ */
+header {
+  background: var(--primary);
+  color: #fff;
+  padding: 16px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+header h1 { font-size: 1.3rem; letter-spacing: 0.3px; }
+header p  { font-size: 0.78rem; opacity: 0.75; margin-top: 3px; }
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.save-badge {
+  font-size: 0.76rem;
+  color: #7fffc4;
+  opacity: 0;
+  transition: opacity 0.4s;
+  white-space: nowrap;
+}
+.save-badge.show { opacity: 1; }
+
+.sync-status {
+  font-size: 0.76rem;
+  white-space: nowrap;
+  transition: opacity 0.6s;
+  opacity: 0;
+}
+.sync-status.show { opacity: 1; }
+
+/* -- Setup / Settings modal ---------------- */
+.setup-steps { counter-reset: step; }
+.setup-step {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: flex-start;
+}
+.step-num {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.step-body { font-size: 0.84rem; line-height: 1.5; color: #444; }
+.step-body strong { color: var(--primary); }
+.code-block {
+  background: #1e293b;
+  color: #7dd3fc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  font-family: monospace;
+  margin: 6px 0;
+  overflow-x: auto;
+  white-space: pre;
+  cursor: pointer;
+  position: relative;
+}
+.code-block:hover::after {
+  content: 'Click to copy';
+  position: absolute;
+  top: 4px; right: 8px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+.url-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.url-input-row input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: monospace;
+  outline: none;
+}
+.url-input-row input:focus { border-color: var(--accent); }
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-top: 6px;
+}
+.conn-ok  { background: #dcfce7; color: #15803d; }
+.conn-no  { background: #fee2e2; color: #991b1b; }
+
+/* -- Buttons ------------------------------------------ */
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(1.12); }
+.btn-white  { background: #fff; color: var(--primary); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-outline-w { background: transparent; border: 1px solid rgba(255,255,255,0.6); color: #fff; }
+
+/* -- Dashboard ---------------------------------------- */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 20px 28px 0;
+}
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-left: 4px solid var(--primary);
+}
+.card.c-accent   { border-left-color: var(--accent); }
+.card.c-warn     { border-left-color: var(--warn); }
+.card.c-success  { border-left-color: var(--success); }
+.card-num   { font-size: 1.9rem; font-weight: 800; color: var(--primary); line-height: 1; }
+.card.c-accent  .card-num { color: var(--accent); }
+.card.c-warn    .card-num { color: var(--warn); }
+.card.c-success .card-num { color: var(--success); }
+.card-label { font-size: 0.74rem; color: #777; margin-top: 5px; }
+
+/* -- Tabs ---------------------------------------------- */
+.tab-bar {
+  display: flex;
+  gap: 0;
+  padding: 20px 28px 0;
+  border-bottom: 2px solid var(--border);
+  background: var(--light);
+  flex-wrap: wrap;
+}
+.tab-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+.tab-btn:hover { color: var(--primary); }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--accent); font-weight: 700; }
+
+/* -- Controls / Filter bar --------------------------- */
+.controls {
+  background: #fff;
+  padding: 10px 28px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+.controls input,
+.controls select {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.83rem;
+  outline: none;
+  background: #fff;
+  font-family: inherit;
+}
+.controls input:focus, .controls select:focus { border-color: var(--accent); }
+#searchInput { min-width: 200px; }
+
+/* -- Tab content --------------------------------------- */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* -- Table wrapper ------------------------------------ */
+.tbl-wrap {
+  background: #fff;
+  padding: 0 28px 32px;
+  overflow-x: auto;
+}
+.group-title {
+  padding: 18px 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.group-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 20px;
+}
+.gp-virtual { background: #dbeafe; color: #1e40af; }
+.gp-campus  { background: #dcfce7; color: #166534; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+thead th {
+  background: var(--primary);
+  color: #fff;
+  padding: 9px 8px;
+  text-align: left;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+thead th.center { text-align: center; }
+tbody tr { border-bottom: 1px solid #eef0f5; transition: background 0.12s; }
+tbody tr:hover { background: #f8faff; }
+tbody td { padding: 7px 8px; vertical-align: middle; }
+td.center { text-align: center; }
+
+/* Name cell */
+.name-text { font-weight: 600; font-size: 0.87rem; }
+
+/* Status badge */
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: filter 0.15s;
+}
+.badge:hover { filter: brightness(0.92); }
+.b-active   { background: #dcfce7; color: #15803d; }
+.b-inactive { background: #fee2e2; color: #991b1b; }
+
+/* Checkbox */
+input[type="checkbox"] {
+  width: 15px; height: 15px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+/* Train count */
+.tc { font-weight: 800; font-size: 0.9rem; }
+.tc-full   { color: var(--success); }
+.tc-part   { color: var(--gold); }
+.tc-none   { color: var(--warn); }
+
+/* Inline number inputs */
+.num-in {
+  width: 46px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 4px;
+  font-size: 0.83rem;
+  font-family: inherit;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.num-in:focus { border-color: var(--accent); }
+
+/* Certificate badge */
+.cert-yes { display:inline-block; padding:3px 10px; border-radius:20px; background:#dcfce7; color:#15803d; font-size:0.78rem; font-weight:700; }
+.cert-no  { display:inline-block; padding:3px 10px; border-radius:20px; background:#fee2e2; color:#991b1b; font-size:0.78rem; font-weight:700; }
+
+/* Comment textarea */
+.comment-ta {
+  border: 1px solid transparent;
+  background: transparent;
+  width: 100%;
+  font-size: 0.8rem;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 32px;
+  max-height: 80px;
+  color: var(--text);
+  outline: none;
+  padding: 3px 5px;
+  border-radius: 5px;
+  transition: border-color 0.2s, background 0.2s;
+  line-height: 1.4;
+}
+.comment-ta:focus  { border-color: var(--accent); background: #f0fdf4; }
+.comment-ta::placeholder { color: #bbb; }
+
+/* Del button */
+.del-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.del-btn:hover { color: var(--warn); }
+
+/* -- Certificates tab -------------------------------- */
+.cert-note {
+  margin: 16px 28px 0;
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.7;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.cert-eligible-row { background: #f0fdf4 !important; }
+.cert-icon { font-size: 1.1rem; text-align: center; }
+
+/* -- Add Mentor Modal -------------------------------- */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px 28px;
+  width: 420px;
+  max-width: 94vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+}
+.modal h2 { color: var(--primary); font-size: 1.1rem; margin-bottom: 16px; }
+.form-row { margin-bottom: 13px; }
+.form-row label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 4px; }
+.form-row input, .form-row select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  outline: none;
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.btn-cancel { background: #f1f5f9; color: #555; border: none; padding: 7px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+
+/* -- Empty state ------------------------------------ */
+.empty-row td { text-align: center; padding: 28px; color: #bbb; font-style: italic; }
+
+/* -- Responsive ------------------------------------- */
+@media (max-width: 640px) {
+  header, .dashboard, .tab-bar, .controls, .tbl-wrap, .cert-note {
+    padding-left: 12px; padding-right: 12px;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- =============================== HEADER =============================== -->
+<header>
+  <div>
+    <h1>M26 Peer Mentorship Tracker</h1>
+    <p>ALU Rwanda &nbsp;&middot;&nbsp; M26 Cohort &nbsp;&middot;&nbsp; 3 Training Sessions &nbsp;&middot;&nbsp; Virtual + At Campus Groups</p>
+  </div>
+  <div class="header-actions">
+    <span class="sync-status" id="syncStatus"></span>
+    <span class="save-badge" id="saveBadge">&#10003; Saved</span>
+    <button class="btn btn-outline-w" id="refreshBtn" onclick="refreshData()">&#8634; Refresh</button>
+    <button class="btn btn-outline-w" onclick="openSettings()">&#9881; Settings</button>
+    <button class="btn btn-outline-w" onclick="exportCSV()">&#11015; Export CSV</button>
+    <button class="btn btn-accent" onclick="openModal()">+ Add Mentor</button>
+  </div>
+</header>
+
+<!-- =============================== DASHBOARD ============================ -->
+<div class="dashboard" id="dashboard"><!-- filled by JS --></div>
+
+<!-- =============================== TABS ================================= -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('all',this)">All Mentors</button>
+  <button class="tab-btn" onclick="switchTab('virtual',this)">Virtual Group</button>
+  <button class="tab-btn" onclick="switchTab('campus',this)">At Campus Group</button>
+  <button class="tab-btn" onclick="switchTab('awards',this)">&#128220; Certificates</button>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <input type="text"  id="searchInput"  placeholder="&#128269;  Search mentor name..." oninput="renderAll()">
+  <select id="statusFilter" onchange="renderAll()">
+    <option value="">All Status</option>
+    <option value="Active">Active</option>
+    <option value="Inactive">Inactive</option>
+  </select>
+  <select id="trainFilter" onchange="renderAll()">
+    <option value="">All Training Levels</option>
+    <option value="3">Full attendance (3/3)</option>
+    <option value="2">Attended 2/3</option>
+    <option value="1">Attended 1/3</option>
+    <option value="0">No training attended</option>
+  </select>
+</div>
+
+<!-- =========================== TAB: ALL ================================= -->
+<div id="tab-all" class="tab-content active">
+  <div class="tbl-wrap">
+    <div class="group-title">All Mentors <span class="group-pill gp-virtual" id="cnt-virtual"></span> <span class="group-pill gp-campus" id="cnt-campus"></span></div>
+    <table>
+      <thead><tr id="thead-all-row"></tr></thead>
+      <tbody id="tbody-all"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =========================== TAB: VIRTUAL ============================ -->
+<div id="tab-virtual" class="tab-content">
+  <div class="tbl-wrap">
+    <div class="group-title">Virtual Group <span class="group-pill gp-virtual" id="cnt-virtual2"></span></div>
+    <table>
+      <thead><tr id="thead-virtual-row"></tr></thead>
+      <tbody id="tbody-virtual"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =========================== TAB: CAMPUS ============================= -->
+<div id="tab-campus" class="tab-content">
+  <div class="tbl-wrap">
+    <div class="group-title">At Campus Group <span class="group-pill gp-campus" id="cnt-campus2"></span></div>
+    <table>
+      <thead><tr id="thead-campus-row"></tr></thead>
+      <tbody id="tbody-campus"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =========================== TAB: CERTIFICATES ========================= -->
+<div id="tab-awards" class="tab-content">
+  <div class="cert-note">
+    <strong>Certificate eligibility is based on training attendance only.</strong><br>
+    &#9989; <strong>Receives certificate</strong> &mdash; attended all 3 training sessions &nbsp;&middot;&nbsp;
+    &#10060; <strong>Does not receive certificate</strong> &mdash; missed one or more sessions
+  </div>
+  <div class="tbl-wrap" style="padding-top:16px">
+    <table>
+      <thead><tr id="thead-awards-row"></tr></thead>
+      <tbody id="tbody-awards"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========================== SETUP / SETTINGS MODAL =================== -->
+<div class="modal-backdrop" id="setupModal">
+  <div class="modal" style="width:540px;max-height:90vh;overflow-y:auto">
+    <h2 id="setupTitle">Connect to Google Sheets</h2>
+    <p style="font-size:0.83rem;color:#666;margin-bottom:16px">
+      This links the tracker to a shared Google Sheet so you and your manager always see the same data.
+      Follow the steps below &mdash; it takes about 5 minutes.
+    </p>
+
+    <div class="setup-steps">
+      <div class="setup-step">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>Create a new Google Sheet</strong><br>
+          Go to <a href="https://sheets.new" target="_blank" style="color:var(--accent)">sheets.new</a> to open a blank spreadsheet.
+          Name it <em>"M26 Mentorship Tracker"</em>.
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>Open Apps Script</strong><br>
+          In your Google Sheet, click <strong>Extensions &rarr; Apps Script</strong>.
+          Delete any existing code and paste the code below:
+          <div class="code-block" id="gasCode" onclick="copyGasCode()">// M26 Mentorship Tracker &mdash; Apps Script Backend
+// Paste this entire block, then click Deploy
+
+const SHEET_NAME = 'Mentors';
+const HEADERS = ['id','name','group','status','t1','t2','t3','mentees','wsLed','wsVol','comments'];
+
+function initSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+  if (sheet.getLastRow() === 0) {
+    sheet.getRange(1,1,1,HEADERS.length).setValues([HEADERS]);
+    sheet.getRange(1,1,1,HEADERS.length).setFontWeight('bold');
+  }
+  return sheet;
+}
+
+function doGet(e) {
+  const sheet = initSheet();
+  const last = sheet.getLastRow();
+  if (last &lt;= 1) return out([]);
+  const vals = sheet.getRange(2,1,last-1,HEADERS.length).getValues();
+  const rows = vals.map(row => {
+    const obj = {};
+    HEADERS.forEach((h,i) => {
+      let v = row[i];
+      if (v === 'true')  v = true;
+      else if (v === 'false') v = false;
+      if (['id','mentees','wsLed','wsVol'].includes(h)) v = Number(v)||0;
+      obj[h] = v;
+    });
+    return obj;
+  });
+  return out(rows);
+}
+
+function doPost(e) {
+  try {
+    const { mentors, nextId } = JSON.parse(e.postData.contents);
+    const sheet = initSheet();
+    const last = sheet.getLastRow();
+    if (last > 1) sheet.deleteRows(2, last - 1);
+    if (mentors && mentors.length > 0) {
+      const rows = mentors.map(m => HEADERS.map(h => m[h] !== undefined ? m[h] : ''));
+      sheet.getRange(2,1,rows.length,HEADERS.length).setValues(rows);
+    }
+    return out({ok: true});
+  } catch(err) { return out({error: String(err)}); }
+}
+
+function out(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}</div>
+          <span style="font-size:0.75rem;color:#888">â†‘ Click the code block to copy it</span>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>Deploy the script</strong><br>
+          Click <strong>Deploy &rarr; New Deployment</strong>.<br>
+          Set type to <em>Web app</em>.<br>
+          Set <em>"Execute as"</em> to <strong>Me</strong>.<br>
+          Set <em>"Who has access"</em> to <strong>Anyone</strong>.<br>
+          Click <strong>Deploy</strong> and copy the Web App URL shown.
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">4</span>
+        <div class="step-body">
+          <strong>Paste the Web App URL below</strong>
+          <div class="url-input-row">
+            <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+            <button class="btn btn-accent" onclick="connectSheets()">Connect</button>
+          </div>
+          <div id="connStatus"></div>
+        </div>
+      </div>
+      <div class="setup-step">
+        <span class="step-num">5</span>
+        <div class="step-body">
+          <strong>Share the Google Sheet with your manager</strong><br>
+          In Google Sheets, click <strong>Share</strong> (top right) and add your manager's email with <em>Editor</em> access.<br>
+          Also share this <code>.html</code> file with them &mdash; they paste the same Web App URL on their end.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions" style="margin-top:8px">
+      <button class="btn-cancel" onclick="closeSettings()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================== ADD MENTOR MODAL ======================== -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <h2>Add New Mentor</h2>
+    <div class="form-row">
+      <label>Full Name *</label>
+      <input type="text" id="f-name" placeholder="e.g. Jane Uwimana">
+    </div>
+    <div class="form-row">
+      <label>Group *</label>
+      <select id="f-group">
+        <option value="Virtual">Virtual</option>
+        <option value="At Campus">At Campus</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Status</label>
+      <select id="f-status">
+        <option value="Active">Active</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Number of Mentees</label>
+      <input type="number" id="f-mentees" value="1" min="0" max="20">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="addMentor()">Add Mentor</button>
+    </div>
+  </div>
+</div>
+
+<!-- =========================== SCRIPT ================================== -->
+<script>
+// --- Default data (pre-populated from M26 pairings) -------------------------
+const DEFAULTS = [
+  // -- Virtual Group (11) --------------------------------------------------
+  { id:1,  name:"Ritha Ishimwe Gasana",     group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:2,  name:"Yvette Kwizera",           group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:3,  name:"Victoria Fakunle",         group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:4,  name:"Ogochukwu JonNwakalo",     group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:5,  name:"Sonia Kamikazi",           group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:6,  name:"Justine Neema",            group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:7,  name:"UWASE Gift Divine",        group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:8,  name:"Aimable Nkurikiyimana",    group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:9,  name:"Emmanuel Nsabagasani",     group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:10, name:"Desmond Tunyinko",         group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:11, name:"Mugabe Bonheur",           group:"Virtual",   status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  // -- At Campus Group (23) ------------------------------------------------
+  { id:12, name:"Christine Uwimana",        group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:13, name:"Akuol Awan Lueth Atem",    group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:14, name:"Gift Ehigie",              group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:15, name:"Oluwanifemi Akinyo",       group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:16, name:"Joan Kariza",              group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:17, name:"Keza Magambo Arlency",     group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:3, wsLed:0, wsVol:0, comments:"" },
+  { id:18, name:"Success Ituma",            group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:19, name:"Ineza Ornella",            group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:20, name:"Lilala Runiga Jemima",     group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:21, name:"Angel INGABIRE",           group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:22, name:"Mercy Ezinne Tony",        group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:23, name:"Samantha Tchwenko",        group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:24, name:"Henriette Iraguha",        group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:25, name:"IBYISHAKA TRESOR",         group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:26, name:"Enock Mugisha",            group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:27, name:"Fahmi Yasser Hamad",       group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:28, name:"Ntagungira Ali Rashid",    group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:3, wsLed:0, wsVol:0, comments:"" },
+  { id:29, name:"Allan Kibogo",             group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:2, wsLed:0, wsVol:0, comments:"" },
+  { id:30, name:"Christian Ishimwe Ntwali", group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:31, name:"John Ngor Deng Garang",    group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:32, name:"Ishami Irene",             group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:33, name:"Nanen Miracle Mbanaade",   group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+  { id:34, name:"Bode MURAI MURAIRI",       group:"At Campus", status:"Active", t1:false, t2:false, t3:false, mentees:1, wsLed:0, wsVol:0, comments:"" },
+];
+
+// --- State -------------------------------------------------------------------
+let mentors   = [];
+let columns   = []; // detected dynamically from sheet data
+let nextId    = 200;
+let syncTimer = null;
+let isSyncing = false;
+
+const LOCAL_KEY = 'm26_tracker_v3';
+const URL_KEY   = 'm26_script_url';
+
+// --- Column helpers -----------------------------------------------------------
+const BASE_COLS   = ['name','group','status','t1','t2','t3','mentees','wsLed','wsVol','comments'];
+const COL_LABELS  = {
+  name:'Mentor Name', group:'Group', status:'Status',
+  t1:'T1', t2:'T2', t3:'T3',
+  mentees:'Mentees', wsLed:'Wkshps Led', wsVol:'Wkshps Vol.', comments:'Comments'
+};
+function colLabel(col) {
+  return COL_LABELS[col] || col.charAt(0).toUpperCase() + col.slice(1).replace(/([A-Z])/g,' $1');
+}
+function isCenterCol(col) {
+  return ['status','t1','t2','t3','mentees','wsLed','wsVol'].includes(col);
+}
+
+// Detect columns from data: base cols first (in order), then any extra ones from the sheet
+function detectColumns(data) {
+  if (!data || data.length === 0) return [...BASE_COLS];
+  const sample = data[0];
+  const base  = BASE_COLS.filter(c => c in sample);
+  const extra = [];
+  data.forEach(m => Object.keys(m).forEach(k => {
+    if (k !== 'id' && !base.includes(k) && !extra.includes(k)) extra.push(k);
+  }));
+  return [...base, ...extra];
+}
+
+// --- Cell rendering -----------------------------------------------------------
+// Interactive cell (for main tables)
+function renderCell(col, val, m) {
+  const v = (val === undefined || val === null) ? '' : val;
+  switch(col) {
+    case 'name':
+      return `<span class="name-text">${esc(v)}</span>`;
+    case 'group':
+      return v ? `<span class="group-pill ${v==='Virtual'?'gp-virtual':'gp-campus'}">${v}</span>` : '';
+    case 'status':
+      return `<span class="badge ${(v||'Active')==='Active'?'b-active':'b-inactive'}"
+        onclick="toggleStatus(${m.id})" title="Click to toggle">${v||'Active'}</span>`;
+    case 't1': case 't2': case 't3': {
+      const b = v===true || v==='TRUE' || v==='true';
+      return `<input type="checkbox" ${b?'checked':''} onchange="toggleField(${m.id},'${col}',this.checked)">`;
+    }
+    case 'mentees': case 'wsLed': case 'wsVol':
+      return `<input class="num-in" type="number" value="${Number(v)||0}" min="0"
+        onchange="numField(${m.id},'${col}',this.value)">`;
+    case 'comments':
+      return `<textarea class="comment-ta" rows="2" placeholder="Add a note..."
+        oninput="commentField(${m.id},this.value)">${esc(v)}</textarea>`;
+    default:
+      // Any custom column added in the sheet &mdash; read-only display
+      return `<span style="font-size:0.83rem;color:#444">${esc(String(v))}</span>`;
+  }
+}
+
+// Static/read-only cell (for Certificates tab)
+function renderCellStatic(col, val) {
+  const v = (val === undefined || val === null) ? '' : val;
+  switch(col) {
+    case 'name':   return `<span class="name-text">${esc(v)}</span>`;
+    case 'group':  return v ? `<span class="group-pill ${v==='Virtual'?'gp-virtual':'gp-campus'}">${v}</span>` : '';
+    case 'status': return `<span class="badge ${(v||'Active')==='Active'?'b-active':'b-inactive'}">${v||'Active'}</span>`;
+    case 't1': case 't2': case 't3':
+      return (v===true||v==='true'||v==='TRUE') ? '&#9989;' : '-';
+    default:
+      return `<span style="font-size:0.83rem;color:#444">${esc(String(v))}</span>`;
+  }
+}
+
+// --- Sync status UI -----------------------------------------------------------
+function setSyncStatus(state) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const map = {
+    syncing: { text:'\u27F3 Syncing...',    color:'#fbbf24' },
+    ok:      { text:'\u2713 Synced',       color:'#7fffc4' },
+    error:   { text:'\u26A0 Sync failed', color:'#f87171' },
+    local:   { text:'Local only',  color:'#94a3b8' },
+  };
+  const s = map[state] || { text:'', color:'#fff' };
+  el.textContent = s.text;
+  el.style.color  = s.color;
+  el.classList.add('show');
+  if (state === 'ok') setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// --- Persistence -------------------------------------------------------------
+function saveLocal() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify({ mentors, nextId }));
+}
+
+function saveData() {
+  saveLocal();
+  const url = localStorage.getItem(URL_KEY);
+  if (!url) { setSyncStatus('local'); return; }
+  clearTimeout(syncTimer);
+  setSyncStatus('syncing');
+  syncTimer = setTimeout(syncToSheets, 2500);
+}
+
+async function syncToSheets() {
+  const url = localStorage.getItem(URL_KEY);
+  if (!url || isSyncing) return;
+  isSyncing = true;
+  try {
+    await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify({ mentors, nextId })
+    });
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+    console.warn('Sync error:', e);
+  } finally {
+    isSyncing = false;
+  }
+}
+
+async function loadData() {
+  // 1. Show local data instantly
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      mentors = p.mentors || JSON.parse(JSON.stringify(DEFAULTS));
+      nextId  = p.nextId  || 200;
+    } else {
+      mentors = JSON.parse(JSON.stringify(DEFAULTS));
+    }
+  } catch(e) {
+    mentors = JSON.parse(JSON.stringify(DEFAULTS));
+  }
+  columns = detectColumns(mentors);
+  renderAll();
+
+  // 2. Fetch latest from Google Sheets (which may have new columns)
+  const url = localStorage.getItem(URL_KEY);
+  if (!url) { setSyncStatus('local'); return; }
+  setSyncStatus('syncing');
+  try {
+    const res  = await fetch(url + '?t=' + Date.now());
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      if (data.length === 0) {
+        await syncToSheets();
+      } else {
+        mentors = data;
+        nextId  = Math.max(...data.map(m => Number(m.id)||0)) + 1;
+        columns = detectColumns(mentors); // pick up any new/removed columns
+        saveLocal();
+        renderAll();
+        setSyncStatus('ok');
+      }
+    } else {
+      setSyncStatus('error');
+    }
+  } catch(e) {
+    setSyncStatus('error');
+    console.warn('Could not reach Google Sheets:', e);
+  }
+}
+
+// Manual refresh
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.textContent = '&#10227;'; btn.disabled = true; }
+  await loadData();
+  if (btn) { btn.textContent = '&#8634; Refresh'; btn.disabled = false; }
+}
+
+// --- Calculations -------------------------------------------------------------
+function trainCount(m) { return (m.t1?1:0)+(m.t2?1:0)+(m.t3?1:0); }
+function certEligible(m) { return m.t1 && m.t2 && m.t3; }
+function tcClass(n) {
+  if (n === 3) return 'tc tc-full';
+  if (n  >  0) return 'tc tc-part';
+  return 'tc tc-none';
+}
+function hasCols(...names) { return names.every(n => columns.includes(n)); }
+
+// --- Filter helpers -----------------------------------------------------------
+function getFiltered(groupKey) {
+  const q  = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const sf = document.getElementById('statusFilter')?.value || '';
+  const tf = document.getElementById('trainFilter')?.value;
+
+  return mentors.filter(m => {
+    if (groupKey && m.group !== groupKey) return false;
+    if (q  && !String(m.name||'').toLowerCase().includes(q)) return false;
+    if (sf && m.status !== sf) return false;
+    if (tf !== '' && tf !== undefined && hasCols('t1','t2','t3')) {
+      if (trainCount(m) !== Number(tf)) return false;
+    }
+    return true;
+  });
+}
+
+// --- Dynamic table building ---------------------------------------------------
+function buildHeaderCells(cols, showGroup) {
+  const display = showGroup ? cols : cols.filter(c => c !== 'group');
+  return '<th style="width:30px">#</th>' +
+    display.map(col => {
+      const attrs = [
+        isCenterCol(col) ? 'class="center"' : '',
+        col === 'comments' ? 'style="min-width:170px"' : col === 'name' ? 'style="min-width:140px"' : ''
+      ].filter(Boolean).join(' ');
+      return `<th ${attrs}>${colLabel(col)}</th>`;
+    }).join('') +
+    '<th style="width:28px"></th>';
+}
+
+function rowHTML(m, idx, cols, showGroup) {
+  const display = showGroup ? cols : cols.filter(c => c !== 'group');
+  const cells = display.map(col => {
+    const center = isCenterCol(col);
+    return `<td${center?' class="center"':''}>${renderCell(col, m[col], m)}</td>`;
+  }).join('');
+  return `<tr data-id="${m.id}">
+    <td style="color:#bbb;font-size:0.76rem">${idx+1}</td>
+    ${cells}
+    <td><button class="del-btn" onclick="removeMentor(${m.id})" title="Remove">âœ•</button></td>
+  </tr>`;
+}
+
+function awardRowHTML(m, idx, cols) {
+  const tc   = trainCount(m);
+  const cert = certEligible(m);
+  const showCert = hasCols('t1','t2','t3');
+  const certCell = showCert
+    ? `<td class="center">${cert
+        ? '<span class="cert-yes">&#9989; Certificate</span>'
+        : `<span class="cert-no">âœ— ${tc}/3 sessions</span>`}</td>`
+    : '';
+  const cells = cols.map(col => {
+    return `<td${isCenterCol(col)?' class="center"':''}>${renderCellStatic(col, m[col])}</td>`;
+  }).join('');
+  return `<tr class="${cert&&showCert?'cert-eligible-row':''}">
+    ${certCell}${cells}
+  </tr>`;
+}
+
+// --- Render dashboard ---------------------------------------------------------
+function renderDashboard() {
+  const total = mentors.length;
+  let cards   = `<div class="card"><div class="card-num">${total}</div><div class="card-label">Total Mentors</div></div>`;
+
+  if (hasCols('status')) {
+    const active = mentors.filter(m => (m.status||'Active') === 'Active').length;
+    cards += `<div class="card c-accent"><div class="card-num">${active}</div><div class="card-label">Active Mentors</div></div>`;
+    cards += `<div class="card"><div class="card-num">${total-active}</div><div class="card-label">Inactive Mentors</div></div>`;
+  }
+  if (hasCols('t1','t2','t3')) {
+    const full = mentors.filter(m => m.t1 && m.t2 && m.t3).length;
+    const cert = mentors.filter(m => certEligible(m)).length;
+    cards += `<div class="card c-warn"><div class="card-num">${full}</div><div class="card-label">Full Training (3/3)</div></div>`;
+    cards += `<div class="card c-success"><div class="card-num">${cert}</div><div class="card-label"> Certificate Eligible</div></div>`;
+  }
+  if (hasCols('group')) {
+    const v = mentors.filter(m => m.group === 'Virtual').length;
+    const c = mentors.filter(m => m.group === 'At Campus').length;
+    cards += `<div class="card"><div class="card-num">${v} / ${c}</div><div class="card-label">Virtual / At Campus</div></div>`;
+  }
+  document.getElementById('dashboard').innerHTML = cards;
+}
+
+// --- Render tables ------------------------------------------------------------
+function renderTable(tbodyId, theadRowId, list, showGroup) {
+  const thead = document.getElementById(theadRowId);
+  const tbody = document.getElementById(tbodyId);
+  if (!thead || !tbody) return;
+  thead.innerHTML = buildHeaderCells(columns, showGroup);
+  if (!list.length) {
+    const span = (showGroup ? columns.length : columns.filter(c=>c!=='group').length) + 2;
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="${span}">No mentors match the current filters.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map((m,i) => rowHTML(m, i, columns, showGroup)).join('');
+}
+
+function renderAwardsTable() {
+  const thead = document.getElementById('thead-awards-row');
+  const tbody = document.getElementById('tbody-awards');
+  const showCert = hasCols('t1','t2','t3');
+  const certTh = showCert ? '<th class="center" style="width:130px">Certificate</th>' : '';
+  thead.innerHTML = certTh + buildHeaderCells(columns, true).replace('<th style="width:28px"></th>','');
+  const sorted = [...mentors].sort((a,b) => trainCount(b) - trainCount(a));
+  tbody.innerHTML = sorted.map((m,i) => awardRowHTML(m, i, columns)).join('');
+}
+
+function renderAll() {
+  const scrollY = window.scrollY;
+  renderDashboard();
+
+  const v = mentors.filter(m=>m.group==='Virtual').length;
+  const c = mentors.filter(m=>m.group==='At Campus').length;
+  const setEl = (id,t) => { const e=document.getElementById(id); if(e) e.textContent=t; };
+  setEl('cnt-virtual',  `Virtual: ${v}`);
+  setEl('cnt-virtual2', `Virtual: ${v}`);
+  setEl('cnt-campus',   `At Campus: ${c}`);
+  setEl('cnt-campus2',  `At Campus: ${c}`);
+
+  renderTable('tbody-all',     'thead-all-row',     getFiltered(null),         true);
+  renderTable('tbody-virtual', 'thead-virtual-row', getFiltered('Virtual'),    false);
+  renderTable('tbody-campus',  'thead-campus-row',  getFiltered('At Campus'),  false);
+  renderAwardsTable();
+  window.scrollTo(0, scrollY);
+}
+
+// --- Interactions -------------------------------------------------------------
+function toggleStatus(id) {
+  const m = mentors.find(x => x.id === id);
+  if (!m) return;
+  m.status = (m.status||'Active') === 'Active' ? 'Inactive' : 'Active';
+  saveData(); renderAll();
+}
+function toggleField(id, field, val) {
+  const m = mentors.find(x => x.id === id);
+  if (!m) return;
+  m[field] = val;
+  saveData(); renderAll();
+}
+function numField(id, field, val) {
+  const m = mentors.find(x => x.id === id);
+  if (!m) return;
+  m[field] = Math.max(0, Number(val)||0);
+  saveData(); renderAll();
+}
+function commentField(id, val) {
+  const m = mentors.find(x => x.id === id);
+  if (!m) return;
+  m.comments = val;
+  saveData();
+}
+function removeMentor(id) {
+  const m = mentors.find(x => x.id === id);
+  if (!m) return;
+  if (!confirm(`Remove "${m.name}" from the tracker?`)) return;
+  mentors = mentors.filter(x => x.id !== id);
+  saveData(); renderAll();
+}
+
+// --- Settings modal -----------------------------------------------------------
+function openSettings() {
+  const existing = localStorage.getItem(URL_KEY) || '';
+  document.getElementById('scriptUrlInput').value = existing;
+  updateConnStatus(existing);
+  document.getElementById('setupModal').classList.add('open');
+}
+function closeSettings() {
+  document.getElementById('setupModal').classList.remove('open');
+}
+function updateConnStatus(url) {
+  const el = document.getElementById('connStatus');
+  if (!el) return;
+  el.innerHTML = url
+    ? '<span class="connection-badge conn-ok">&#9989; Connected</span>'
+    : '<span class="connection-badge conn-no">&#10060; Not connected yet</span>';
+}
+async function connectSheets() {
+  const url = document.getElementById('scriptUrlInput').value.trim();
+  if (!url || !url.startsWith('https://script.google.com')) {
+    alert('Please paste a valid Google Apps Script Web App URL (starts with https://script.google.com).');
+    return;
+  }
+  const btn = document.querySelector('#setupModal .btn-accent');
+  btn.textContent = 'Connecting...';
+  btn.disabled = true;
+  try {
+    const res  = await fetch(url + '?t=' + Date.now());
+    const data = await res.json();
+    localStorage.setItem(URL_KEY, url);
+    updateConnStatus(url);
+    btn.textContent = '&#10003; Connected!';
+    btn.style.background = '#2D9E6B';
+    await loadData();
+    setTimeout(() => {
+      btn.textContent = 'Connect';
+      btn.style.background = '';
+      btn.disabled = false;
+      closeSettings();
+    }, 1500);
+  } catch(e) {
+    alert('Could not reach that URL. Make sure you set access to "Anyone" when deploying.');
+    btn.textContent = 'Connect';
+    btn.disabled = false;
+  }
+}
+function copyGasCode() {
+  const code = document.getElementById('gasCode').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    const el = document.getElementById('gasCode');
+    el.style.outline = '2px solid #7dd3fc';
+    setTimeout(() => el.style.outline = '', 1200);
+  });
+}
+
+// --- Tabs ---------------------------------------------------------------------
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// --- Add Mentor ---------------------------------------------------------------
+function openModal()  { document.getElementById('addModal').classList.add('open'); }
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('f-name').value = '';
+}
+function addMentor() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { alert('Please enter the mentor\'s full name.'); return; }
+  const newM = { id: nextId++ };
+  // Populate all current columns with defaults
+  columns.forEach(col => {
+    const defaults = { group:'At Campus', status:'Active', t1:false, t2:false, t3:false, mentees:0, wsLed:0, wsVol:0, comments:'' };
+    newM[col] = defaults[col] !== undefined ? defaults[col] : '';
+  });
+  newM.name    = name;
+  newM.group   = document.getElementById('f-group').value;
+  newM.status  = document.getElementById('f-status').value;
+  newM.mentees = Math.max(0, Number(document.getElementById('f-mentees').value)||0);
+  mentors.push(newM);
+  saveData(); renderAll(); closeModal();
+}
+
+// --- Export CSV ---------------------------------------------------------------
+function exportCSV() {
+  // Export whatever columns currently exist
+  const exportCols = columns;
+  const certCol = hasCols('t1','t2','t3') ? ['Certificate'] : [];
+  const headers  = [...exportCols, ...certCol];
+  const rows = mentors.map(m => {
+    const cells = exportCols.map(col => {
+      const v = m[col];
+      if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+      return `"${String(v||'').replace(/"/g,'""')}"`;
+    });
+    if (certCol.length) cells.push(certEligible(m) ? 'Yes' : 'No');
+    return cells;
+  });
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'M26_Mentorship_Tracker_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// --- Utility ------------------------------------------------------------------
+function esc(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+// --- Close modals on backdrop click -------------------------------------------
+document.getElementById('addModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('setupModal').addEventListener('click', function(e) {
+  if (e.target === this) closeSettings();
+});
+
+// --- Init ---------------------------------------------------------------------
+loadData();
+setInterval(() => { const u = localStorage.getItem(URL_KEY); if (u && !isSyncing) loadData(); }, 5*60*1000);
+</script>
+</body>
+</html>
